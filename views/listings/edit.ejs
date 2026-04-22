@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StayFinder | Edit Listing</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <%- include("../partials/navbar") %>
+    <main class="container form-page">
+      <h1>Edit Listing</h1>
+      <p class="form-subtitle">Keep your listing updated so visitors always see the latest information.</p>
+      <form action="/listings/<%= listing._id %>?_method=PUT" method="POST" class="form-card">
+        <label>Title</label>
+        <input type="text" name="listing[title]" value="<%= listing.title %>" required />
+
+        <label>Description</label>
+        <textarea name="listing[description]" rows="4" required><%= listing.description %></textarea>
+
+        <label>Price (INR/month)</label>
+        <input type="number" name="listing[price]" value="<%= listing.price %>" min="0" required />
+
+        <label>Category</label>
+        <select name="listing[category]" required>
+          <option value="room-hostel-pg" <%= ["room-hostel-pg", "room"].includes(listing.category) ? "selected" : "" %>>Room / Hostel / PG</option>
+          <option value="office" <%= listing.category === "office" ? "selected" : "" %>>Office</option>
+          <option value="shop" <%= listing.category === "shop" ? "selected" : "" %>>Shops / Showrooms</option>
+        </select>
+
+        <label>Image URL</label>
+        <input type="url" name="listing[imageUrl]" value="<%= listing.imageUrl %>" required />
+
+        <label>Location</label>
+        <input type="text" name="listing[location]" value="<%= listing.location %>" required />
+
+        <button type="submit">Update Listing</button>
+      </form>
+    </main>
+  </body>
+</html>

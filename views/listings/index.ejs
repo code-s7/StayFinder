@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StayFinder | Listings</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <%- include("../partials/navbar") %>
+    <%
+      const heroConfigByCategory = {
+        all: {
+          kicker: "India's smart property discovery",
+          title: "Find premium stays and workspaces with confidence",
+          description:
+            "Compare verified options, shortlist quickly, and connect with owners or agents in a seamless professional experience.",
+          highlights: ["100% verified profiles", "Transparent pricing", "Fast owner response"],
+          sideTitle: "Post property for FREE",
+          sideText: "Reach tenants and buyers actively searching in your city.",
+          sideCta: "Post Property",
+          searchLabel: "All Residential",
+        },
+        "room-hostel-pg": {
+          kicker: "Student and rental living",
+          title: "Discover PGs, hostels, and rooms near your destination",
+          description:
+            "Browse budget-friendly and premium co-living options with essentials, safety highlights, and convenient locations.",
+          highlights: ["Ideal for students", "Furnished options", "Quick move-in support"],
+          sideTitle: "List your room in minutes",
+          sideText: "Get quality rental leads from active room seekers.",
+          sideCta: "Add Room Listing",
+          searchLabel: "PG / Room Search",
+        },
+        office: {
+          kicker: "Business-ready commercial inventory",
+          title: "Find office spaces built for productivity and growth",
+          description:
+            "Explore professional offices by size, location, and monthly budget to match your team's expansion goals.",
+          highlights: ["Prime business hubs", "Flexible space options", "Transparent lease details"],
+          sideTitle: "Showcase your office space",
+          sideText: "Connect with startups and enterprises searching today.",
+          sideCta: "List Office Space",
+          searchLabel: "Office Search",
+        },
+        shop: {
+          kicker: "Retail and showroom discovery",
+          title: "Find high-visibility shops and showrooms in top markets",
+          description:
+            "Evaluate footfall-ready retail spaces with clear pricing and location advantages for your business category.",
+          highlights: ["Popular market areas", "Retail-ready options", "Better business visibility"],
+          sideTitle: "List your retail property",
+          sideText: "Reach serious dealers and retail tenants faster.",
+          sideCta: "Add Shop Listing",
+          searchLabel: "Retail Search",
+        },
+      };
+      const activeHero = heroConfigByCategory[selectedCategory] || heroConfigByCategory.all;
+    %>
+    <main class="container landing-shell">
+      <section class="hero hero-banner category-<%= selectedCategory || "all" %>">
+        <div class="hero-content">
+          <p class="hero-kicker"><%= activeHero.kicker %></p>
+          <h1><%= activeHero.title %></h1>
+          <p><%= activeHero.description %></p>
+          <div class="hero-highlights">
+            <% activeHero.highlights.forEach((point) => { %>
+            <span><%= point %></span>
+            <% }); %>
+          </div>
+        </div>
+        <aside class="hero-side-card">
+          <p class="hero-side-title"><%= activeHero.sideTitle %></p>
+          <p><%= activeHero.sideText %></p>
+          <a href="/listings/new" class="btn btn-accent"><%= activeHero.sideCta %></a>
+        </aside>
+      </section>
+
+      <section class="search-panel">
+        <form class="search-bar" action="/listings" method="GET">
+          <input type="hidden" name="category" value="<%= selectedCategory || "all" %>" />
+          <span class="search-chip"><%= activeHero.searchLabel %></span>
+          <input
+            type="text"
+            name="city"
+            value="<%= searchCity || "" %>"
+            placeholder="Search by city or locality"
+          />
+          <button type="submit" class="btn">Search</button>
+        </form>
+      </section>
+
+      <section class="listing-head">
+        <div>
+          <p class="listing-head-kicker">Curated inventory</p>
+          <h2>Featured Listings</h2>
+        </div>
+      </section>
+
+      <section class="grid">
+        <% if (!listings.length) { %>
+        <article class="empty-state">
+          <h2>No listings in this category yet</h2>
+          <p>Try another city/category combination or add the first listing for this category.</p>
+        </article>
+        <% } %> <% listings.forEach((listing) => { %>
+        <article class="card">
+          <img
+            src="<%= listing.imageUrl %>"
+            alt="<%= listing.title %>"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='https://placehold.co/1000x700?text=Image+Unavailable';"
+          />
+          <div class="card-body">
+            <p class="listing-type">
+              <%= listing.category === "room-hostel-pg" || listing.category === "room"
+                ? "Room / Hostel / PG"
+                : listing.category === "shop"
+                ? "Shops / Showrooms"
+                : "Office" %>
+            </p>
+            <h2><%= listing.title %></h2>
+            <p class="muted">📍 <%= listing.location %></p>
+            <p class="price">INR <%= listing.price %>/month</p>
+            <a href="/listings/<%= listing._id %>" class="btn">View Details</a>
+          </div>
+        </article>
+        <% }); %>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StayFinder | Sign Up</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <%- include("../partials/navbar") %>
+    <main class="container form-page">
+      <h1>Create Account</h1>
+      <form action="/signup" method="POST" class="form-card auth-card">
+        <label>Full Name</label>
+        <input type="text" name="name" placeholder="Your name" required />
+
+        <label>Email</label>
+        <input type="email" name="email" placeholder="you@example.com" required />
+
+        <label>Password</label>
+        <div class="password-field">
+          <input type="password" name="password" minlength="6" placeholder="Minimum 6 characters" required />
+          <button type="button" class="toggle-password">Show</button>
+        </div>
+
+        <label>Confirm Password</label>
+        <div class="password-field">
+          <input type="password" name="confirmPassword" minlength="6" placeholder="Re-enter password" required />
+          <button type="button" class="toggle-password">Show</button>
+        </div>
+
+        <button type="submit">Sign Up</button>
+      </form>
+      <p class="auth-note">Already have an account? <a href="/login">Login here</a>.</p>
+    </main>
+    <script>
+      const toggles = document.querySelectorAll(".toggle-password");
+      toggles.forEach((toggleBtn) => {
+        const passwordInput = toggleBtn.previousElementSibling;
+        toggleBtn.addEventListener("click", () => {
+          const isHidden = passwordInput.type === "password";
+          passwordInput.type = isHidden ? "text" : "password";
+          toggleBtn.textContent = isHidden ? "Hide" : "Show";
+        });
+      });
+    </script>
+  </body>
+</html>

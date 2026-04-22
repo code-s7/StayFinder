@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StayFinder | Add Listing</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <%- include("../partials/navbar") %>
+    <main class="container form-page">
+      <h1>Add New Listing</h1>
+      <p class="form-subtitle">Share accurate details so people can quickly understand your property.</p>
+      <form action="/listings" method="POST" class="form-card">
+        <label>Title</label>
+        <input type="text" name="listing[title]" required />
+
+        <label>Description</label>
+        <textarea name="listing[description]" rows="4" required></textarea>
+
+        <label>Price (INR/month)</label>
+        <input type="number" name="listing[price]" min="0" required />
+
+        <label>Category</label>
+        <select name="listing[category]" required>
+          <option value="room-hostel-pg">Room / Hostel / PG</option>
+          <option value="office">Office</option>
+          <option value="shop">Shops / Showrooms</option>
+        </select>
+
+        <label>Image URL</label>
+        <input type="url" name="listing[imageUrl]" required />
+
+        <label>Location</label>
+        <input type="text" name="listing[location]" required />
+
+        <button type="submit">Create Listing</button>
+      </form>
+    </main>
+  </body>
+</html>

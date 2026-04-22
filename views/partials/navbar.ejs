@@ -1,0 +1,38 @@
+<nav class="navbar">
+  <div class="container nav-wrap">
+    <div class="brand-stack">
+      <a href="/listings" class="logo">StayFinder</a>
+      <p class="tagline">Smarter stays and workspaces, in one city feed</p>
+    </div>
+    <div class="nav-links quick-links">
+      <% if (currentUser) { %>
+      <span class="welcome-text">Hi, <%= currentUser.name %></span>
+      <a href="/profile">Profile</a>
+      <a href="/listings/new">+ Add Listing</a>
+      <form action="/logout" method="POST">
+        <button type="submit" class="ghost-btn">Logout</button>
+      </form>
+      <% } else { %>
+      <a href="/login">Login</a>
+      <a href="/signup">Sign Up</a>
+      <% } %>
+    </div>
+  </div>
+  <div class="container category-nav">
+    <% (navCategories || []).forEach((category) => { %>
+    <a
+      href="/listings?category=<%= category.key %>"
+      class="category-chip <%= selectedCategory === category.key ? "active" : "" %>"
+    >
+      <%= category.label %>
+    </a>
+    <% }); %>
+  </div>
+  <% if (flash) { %>
+  <div class="container">
+    <p class="flash-message <%= flash.type === "error" ? "flash-error" : "flash-success" %>">
+      <%= flash.message %>
+    </p>
+  </div>
+  <% } %>
+</nav>

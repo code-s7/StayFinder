@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StayFinder | <%= listing.title %></title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <%- include("../partials/navbar") %>
+    <main class="container details">
+      <article class="details-card">
+        <img
+          src="<%= listing.imageUrl %>"
+          alt="<%= listing.title %>"
+          loading="lazy"
+          onerror="this.onerror=null;this.src='https://placehold.co/1000x700?text=Image+Unavailable';"
+        />
+        <div class="details-content">
+          <h1><%= listing.title %></h1>
+          <p class="badge">
+            <%= listing.category === "room-hostel-pg" || listing.category === "room"
+              ? "ROOM / HOSTEL / PG"
+              : listing.category === "shop"
+              ? "SHOPS / SHOWROOMS"
+              : (listing.category || "uncategorized").toUpperCase() %>
+          </p>
+          <p class="description"><%= listing.description %></p>
+          <p class="price">INR <%= listing.price %>/month</p>
+          <p class="muted"><strong>Location:</strong> <%= listing.location %></p>
+
+          <div class="actions">
+            <a href="/listings/<%= listing._id %>/edit" class="btn">Edit</a>
+            <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST">
+              <button type="submit" class="danger">Delete</button>
+            </form>
+          </div>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>
