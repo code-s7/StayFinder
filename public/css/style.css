@@ -289,6 +289,35 @@ body {
   border-color: #e5e7eb;
 }
 
+.intent-meta {
+  border-top: 1px solid #e5e7eb;
+  padding: 10px 12px 12px;
+  background: #f8fafc;
+}
+
+.intent-meta-label {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.intent-chips {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.intent-chips span {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 5px 10px;
+  color: #1e293b;
+  background: #fff;
+}
+
 .listing-head {
   margin-top: 24px;
   margin-bottom: 14px;
@@ -436,6 +465,37 @@ button:hover {
   color: #475569;
 }
 
+.ai-generator {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-generator-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-generate-btn {
+  width: fit-content;
+  background: #5b21b6;
+}
+
+.ai-generate-btn:hover {
+  opacity: 0.95;
+}
+
+.ai-generate-status {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+}
+
+.ai-generate-status.error {
+  color: #b91c1c;
+}
+
 .auth-card {
   max-width: 460px;
 }
@@ -566,6 +626,98 @@ select:focus {
   color: #64748b;
 }
 
+.chat-page {
+  padding: 28px 0 34px;
+}
+
+.chat-shell {
+  background: #fff;
+  border: 1px solid #dfe6f1;
+  border-radius: 14px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 22px;
+  border-bottom: 1px solid #e6ebf2;
+  background: linear-gradient(100deg, #10233f, #1f3f74);
+}
+
+.chat-header h1 {
+  margin: 0;
+  color: #fff;
+}
+
+.chat-header p {
+  margin: 10px 0 0;
+  color: #dbeafe;
+  max-width: 880px;
+}
+
+.chat-messages {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 380px;
+  max-height: 56vh;
+  overflow-y: auto;
+  background: #f8fafc;
+}
+
+.chat-bubble {
+  max-width: min(86%, 760px);
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid #dbe3ee;
+  line-height: 1.52;
+  white-space: pre-wrap;
+}
+
+.chat-bubble.assistant {
+  align-self: flex-start;
+  background: #fff;
+  color: #1f2937;
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background: #2563eb;
+  color: #fff;
+  border-color: #1d4ed8;
+}
+
+.chat-form {
+  border-top: 1px solid #e6ebf2;
+  padding: 14px;
+  background: #fff;
+}
+
+.chat-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 84px;
+}
+
+.chat-actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chat-status {
+  margin: 0;
+  color: #334155;
+  font-size: 13px;
+}
+
+.chat-status.error {
+  color: #b91c1c;
+}
+
 @media (max-width: 760px) {
   .nav-wrap {
     flex-direction: column;
@@ -613,5 +765,14 @@ select:focus {
 
   .details-content {
     padding: 0 18px 20px;
+  }
+
+  .chat-bubble {
+    max-width: 100%;
+  }
+
+  .chat-actions {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

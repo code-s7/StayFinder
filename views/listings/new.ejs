@@ -13,16 +13,24 @@
       <p class="form-subtitle">Share accurate details so people can quickly understand your property.</p>
       <form action="/listings" method="POST" class="form-card">
         <label>Title</label>
-        <input type="text" name="listing[title]" required />
+        <input type="text" name="listing[title]" id="listing-title" required />
 
         <label>Description</label>
-        <textarea name="listing[description]" rows="4" required></textarea>
+        <div class="ai-generator">
+          <textarea name="listing[description]" id="listing-description" rows="4" required></textarea>
+          <div class="ai-generator-controls">
+            <button type="button" id="generate-description-btn" class="btn ai-generate-btn">
+              Generate Smart Description (Gemini AI)
+            </button>
+            <p id="ai-generate-status" class="ai-generate-status"></p>
+          </div>
+        </div>
 
         <label>Price (INR/month)</label>
-        <input type="number" name="listing[price]" min="0" required />
+        <input type="number" name="listing[price]" id="listing-price" min="0" required />
 
         <label>Category</label>
-        <select name="listing[category]" required>
+        <select name="listing[category]" id="listing-category" required>
           <option value="room-hostel-pg">Room / Hostel / PG</option>
           <option value="office">Office</option>
           <option value="shop">Shops / Showrooms</option>
@@ -32,10 +40,63 @@
         <input type="url" name="listing[imageUrl]" required />
 
         <label>Location</label>
-        <input type="text" name="listing[location]" required />
+        <input type="text" name="listing[location]" id="listing-location" required />
+
+        <label>Key Highlights (optional, comma separated)</label>
+        <input
+          type="text"
+          id="listing-highlights"
+          placeholder="Near metro, furnished, 24x7 security"
+        />
 
         <button type="submit">Create Listing</button>
       </form>
     </main>
+    <script>
+      const generateBtn = document.getElementById("generate-description-btn");
+      const statusEl = document.getElementById("ai-generate-status");
+      const descriptionEl = document.getElementById("listing-description");
+
+      const setStatus = (text, isError = false) => {
+        statusEl.textContent = text;
+        statusEl.classList.toggle("error", isError);
+      };
+
+      generateBtn.addEventListener("click", async () => {
+        const title = document.getElementById("listing-title").value.trim();
+        const category = document.getElementById("listing-category").value;
+        const location = document.getElementById("listing-location").value.trim();
+        const price = document.getElementById("listing-price").value;
+        const highlights = document.getElementById("listing-highlights").value.trim();
+
+        if (!title || !category || !location) {
+          setStatus("Please fill title, category, and location before generating.", true);
+          return;
+        }
+
+        generateBtn.disabled = true;
+        setStatus("Generating description with Gemini...");
+
+        try {
+          const response = await fetch("/ai/listings/description", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, category, location, price, highlights }),
+          });
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Could not generate description.");
+          }
+
+          descriptionEl.value = data.description;
+          setStatus("Description generated. You can edit it before submitting.");
+        } catch (error) {
+          setStatus(error.message || "Failed to generate description.", true);
+        } finally {
+          generateBtn.disabled = false;
+        }
+      });
+    </script>
   </body>
 </html>

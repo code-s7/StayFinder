@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StayFinder | Property Assistant</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <%- include("../partials/navbar") %>
+    <main class="container chat-page">
+      <section class="chat-shell">
+        <header class="chat-header">
+          <h1>Conversational Property Assistant</h1>
+          <p>
+            Ask anything about budget, office type, locality, rental range, amenities, or lease decisions.
+            Example: I have INR 40,000 budget for 8 people in Noida. What office should I choose?
+          </p>
+        </header>
+
+        <div id="chat-messages" class="chat-messages" aria-live="polite">
+          <article class="chat-bubble assistant">
+            Hi! I am your StayFinder Property Assistant. Share your budget, city, and needs, and I will
+            suggest suitable options.
+          </article>
+        </div>
+
+        <form id="chat-form" class="chat-form">
+          <textarea
+            id="chat-input"
+            rows="3"
+            placeholder="Type your question... (e.g. I have 25000 budget in Pune for a small office)"
+            required
+          ></textarea>
+          <div class="chat-actions">
+            <p id="chat-status" class="chat-status"></p>
+            <button type="submit" class="btn">Ask Assistant</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script>
+      const chatForm = document.getElementById("chat-form");
+      const chatInput = document.getElementById("chat-input");
+      const chatMessages = document.getElementById("chat-messages");
+      const chatStatus = document.getElementById("chat-status");
+      const chatHistory = [];
+
+      const setStatus = (text, isError = false) => {
+        chatStatus.textContent = text;
+        chatStatus.classList.toggle("error", isError);
+      };
+
+      const appendBubble = (role, text) => {
+        const bubble = document.createElement("article");
+        bubble.className = `chat-bubble ${role}`;
+        bubble.textContent = text;
+        chatMessages.appendChild(bubble);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      };
+
+      chatForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        appendBubble("user", message);
+        chatHistory.push({ role: "user", text: message });
+        chatInput.value = "";
+        chatInput.focus();
+        chatInput.disabled = true;
+        setStatus("Getting answer from Gemini...");
+
+        try {
+          const response = await fetch("/ai/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message, history: chatHistory }),
+          });
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Could not get assistant response.");
+          }
+
+          appendBubble("assistant", data.reply);
+          chatHistory.push({ role: "assistant", text: data.reply });
+          setStatus("Assistant replied successfully.");
+        } catch (error) {
+          appendBubble(
+            "assistant",
+            "I am having trouble answering right now. Please try again in a moment."
+          );
+          setStatus(error.message || "Failed to connect to assistant.", true);
+        } finally {
+          chatInput.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

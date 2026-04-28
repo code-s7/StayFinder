@@ -7,12 +7,14 @@
     <div class="nav-links quick-links">
       <% if (currentUser) { %>
       <span class="welcome-text">Hi, <%= currentUser.name %></span>
+      <a href="/chat">AI Assistant</a>
       <a href="/profile">Profile</a>
       <a href="/listings/new">+ Add Listing</a>
       <form action="/logout" method="POST">
         <button type="submit" class="ghost-btn">Logout</button>
       </form>
       <% } else { %>
+      <a href="/chat">AI Assistant</a>
       <a href="/login">Login</a>
       <a href="/signup">Sign Up</a>
       <% } %>

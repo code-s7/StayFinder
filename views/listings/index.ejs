@@ -79,15 +79,33 @@
       <section class="search-panel">
         <form class="search-bar" action="/listings" method="GET">
           <input type="hidden" name="category" value="<%= selectedCategory || "all" %>" />
-          <span class="search-chip"><%= activeHero.searchLabel %></span>
+          <span class="search-chip">AI Search</span>
           <input
             type="text"
-            name="city"
-            value="<%= searchCity || "" %>"
-            placeholder="Search by city or locality"
+            name="q"
+            value="<%= searchNaturalQuery || searchCity || "" %>"
+            placeholder='Try: quiet office space under 5000 near Connaught Place'
           />
           <button type="submit" class="btn">Search</button>
         </form>
+        <% if (searchIntent) { %>
+        <div class="intent-meta">
+          <p class="intent-meta-label">
+            Interpreted by <%= searchIntentSource === "ai" ? "Gemini AI" : "fallback parser" %>
+          </p>
+          <div class="intent-chips">
+            <% if (searchIntent.category) { %>
+            <span>Category: <%= searchIntent.category === "room-hostel-pg" ? "Room / Hostel / PG" : searchIntent.category === "shop" ? "Shops / Showrooms" : "Office" %></span>
+            <% } %> <% if (searchIntent.location) { %>
+            <span>Location: <%= searchIntent.location %></span>
+            <% } %> <% if (searchIntent.minPrice || searchIntent.maxPrice) { %>
+            <span>
+              Budget: INR <%= searchIntent.minPrice || 0 %> - INR <%= searchIntent.maxPrice || "Any" %>/month
+            </span>
+            <% } %>
+          </div>
+        </div>
+        <% } %>
       </section>
 
       <section class="listing-head">
