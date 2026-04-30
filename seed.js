@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Listing = require("./models/listing");
+const User = require("./models/user");
 
 const MONGO_URL = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/stayfinder";
 
@@ -32,8 +33,23 @@ const sampleListings = [
 
 async function seedDB() {
   await mongoose.connect(MONGO_URL);
+  const owner = await User.findOneAndUpdate(
+    { email: "demo@stayfinder.com" },
+    {
+      name: "Demo Owner",
+      email: "demo@stayfinder.com",
+      passwordHash: "$2a$12$Nrrxj2Ra7.K0xA51TjK9be2S5u4IYfv4yNPSWEu5Vxv.w20jqH6qW",
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  const listingsWithOwner = sampleListings.map((listing) => ({
+    ...listing,
+    owner: owner._id,
+  }));
+
   await Listing.deleteMany({});
-  await Listing.insertMany(sampleListings);
+  await Listing.insertMany(listingsWithOwner);
   console.log("Sample listings inserted.");
   await mongoose.connection.close();
 }

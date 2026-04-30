@@ -9,31 +9,54 @@
   <body>
     <%- include("../partials/navbar") %>
     <main class="container details">
-      <article class="details-card">
-        <img
-          src="<%= listing.imageUrl %>"
-          alt="<%= listing.title %>"
-          loading="lazy"
-          onerror="this.onerror=null;this.src='https://placehold.co/1000x700?text=Image+Unavailable';"
-        />
+      <a href="/listings" class="details-back-link">← Back to Listings</a>
+
+      <article class="details-card details-card-modern">
+        <div class="details-image-shell">
+          <img
+            src="<%= listing.imageUrl %>"
+            alt="<%= listing.title %>"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='https://placehold.co/1200x800?text=Image+Unavailable';"
+          />
+        </div>
         <div class="details-content">
-          <h1><%= listing.title %></h1>
-          <p class="badge">
+          <p class="badge details-badge">
             <%= listing.category === "room-hostel-pg" || listing.category === "room"
               ? "ROOM / HOSTEL / PG"
               : listing.category === "shop"
               ? "SHOPS / SHOWROOMS"
-              : (listing.category || "uncategorized").toUpperCase() %>
+              : "OFFICE" %>
           </p>
-          <p class="description"><%= listing.description %></p>
-          <p class="price">INR <%= listing.price %>/month</p>
-          <p class="muted"><strong>Location:</strong> <%= listing.location %></p>
+          <h1><%= listing.title %></h1>
 
-          <div class="actions">
-            <a href="/listings/<%= listing._id %>/edit" class="btn">Edit</a>
+          <div class="details-meta-grid">
+            <div class="details-meta-item">
+              <p class="details-meta-label">Monthly Rent</p>
+              <p class="details-meta-value price">INR <%= listing.price %>/month</p>
+            </div>
+            <div class="details-meta-item">
+              <p class="details-meta-label">Location</p>
+              <p class="details-meta-value"><%= listing.location %></p>
+            </div>
+          </div>
+
+          <div class="details-section">
+            <h2>Description</h2>
+            <p class="description"><%= listing.description %></p>
+          </div>
+
+          <div class="details-actions">
+            <button type="button" class="btn btn-disabled" disabled title="Coming soon">
+              Get Dealer's Details
+            </button>
+
+            <% if (canManageListing) { %>
+            <a href="/listings/<%= listing._id %>/edit" class="btn">Edit Listing</a>
             <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST">
-              <button type="submit" class="danger">Delete</button>
+              <button type="submit" class="danger">Delete Listing</button>
             </form>
+            <% } %>
           </div>
         </div>
       </article>
