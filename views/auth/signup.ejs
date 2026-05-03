@@ -9,40 +9,38 @@
   <body>
     <%- include("../partials/navbar") %>
     <main class="container form-page">
-      <h1>Create Account</h1>
+      <h1>Create account</h1>
+      <p class="form-subtitle">Join StayFinder to list properties and track what you post.</p>
       <form action="/signup" method="POST" class="form-card auth-card">
-        <label>Full Name</label>
-        <input type="text" name="name" placeholder="Your name" required />
+        <label>Name</label>
+        <input type="text" name="name" placeholder="Your name" required autocomplete="name" />
 
         <label>Email</label>
-        <input type="email" name="email" placeholder="you@example.com" required />
+        <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
 
         <label>Password</label>
-        <div class="password-field">
-          <input type="password" name="password" minlength="6" placeholder="Minimum 6 characters" required />
-          <button type="button" class="toggle-password">Show</button>
-        </div>
+        <input
+          type="password"
+          name="password"
+          placeholder="At least 6 characters"
+          required
+          minlength="6"
+          autocomplete="new-password"
+        />
 
-        <label>Confirm Password</label>
-        <div class="password-field">
-          <input type="password" name="confirmPassword" minlength="6" placeholder="Re-enter password" required />
-          <button type="button" class="toggle-password">Show</button>
-        </div>
+        <label>Confirm password</label>
+        <input
+          type="password"
+          name="confirmPassword"
+          placeholder="Confirm password"
+          required
+          minlength="6"
+          autocomplete="new-password"
+        />
 
-        <button type="submit">Sign Up</button>
+        <button type="submit">Sign up</button>
       </form>
       <p class="auth-note">Already have an account? <a href="/login">Login here</a>.</p>
     </main>
-    <script>
-      const toggles = document.querySelectorAll(".toggle-password");
-      toggles.forEach((toggleBtn) => {
-        const passwordInput = toggleBtn.previousElementSibling;
-        toggleBtn.addEventListener("click", () => {
-          const isHidden = passwordInput.type === "password";
-          passwordInput.type = isHidden ? "text" : "password";
-          toggleBtn.textContent = isHidden ? "Hide" : "Show";
-        });
-      });
-    </script>
   </body>
 </html>

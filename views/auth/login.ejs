@@ -10,19 +10,30 @@
     <%- include("../partials/navbar") %>
     <main class="container form-page">
       <h1>Login</h1>
+      <p class="form-subtitle">Welcome back. Sign in to post and manage your listings.</p>
       <form action="/login" method="POST" class="form-card auth-card">
         <label>Email</label>
-        <input type="email" name="email" placeholder="you@example.com" required />
+        <input type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
 
         <label>Password</label>
         <div class="password-field">
-          <input type="password" name="password" placeholder="Enter password" required />
-          <button type="button" class="toggle-password">Show</button>
+          <input
+            type="password"
+            name="password"
+            id="login-password"
+            placeholder="Enter password"
+            required
+            minlength="6"
+            autocomplete="current-password"
+          />
+          <button type="button" class="ghost-btn small" id="toggle-password" aria-label="Show password">
+            Show
+          </button>
         </div>
 
         <label class="checkbox-row">
-          <input type="checkbox" name="rememberMe" />
-          <span>Remember me for 30 days</span>
+          <input type="checkbox" name="rememberMe" value="1" />
+          Remember me for 30 days
         </label>
 
         <button type="submit">Login</button>
@@ -30,15 +41,13 @@
       <p class="auth-note">New to StayFinder? <a href="/signup">Create account</a>.</p>
     </main>
     <script>
-      const toggleBtn = document.querySelector(".toggle-password");
-      const passwordInput = document.querySelector("input[name='password']");
-      if (toggleBtn && passwordInput) {
-        toggleBtn.addEventListener("click", () => {
-          const isHidden = passwordInput.type === "password";
-          passwordInput.type = isHidden ? "text" : "password";
-          toggleBtn.textContent = isHidden ? "Hide" : "Show";
-        });
-      }
+      const input = document.getElementById("login-password");
+      const btn = document.getElementById("toggle-password");
+      btn.addEventListener("click", () => {
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "Hide" : "Show";
+      });
     </script>
   </body>
 </html>

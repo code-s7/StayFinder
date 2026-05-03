@@ -5,9 +5,6 @@ const path = require("path");
 const methodOverride = require("method-override");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
-const nodemailer = require("nodemailer");
-const { OAuth2Client } = require("google-auth-library");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const Listing = require("./models/listing");
 const User = require("./models/user");
@@ -26,39 +23,6 @@ mongoose
   .connect(MONGO_URL)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("MongoDB error:", err));
-
-const dropLegacyUserIndexIfPresent = async () => {
-  try {
-    const indexes = await User.collection.indexes();
-    const hasLegacyUsernameIndex = indexes.some((index) => index.name === "username_1");
-
-    if (hasLegacyUsernameIndex) {
-      await User.collection.dropIndex("username_1");
-      console.log("Dropped legacy users.username_1 index.");
-    }
-  } catch (error) {
-    console.warn("Legacy index cleanup skipped:", error.message);
-  }
-};
-
-const markLegacyUsersVerified = async () => {
-  try {
-    const result = await User.updateMany(
-      { isEmailVerified: { $exists: false } },
-      { $set: { isEmailVerified: true } }
-    );
-    if (result.modifiedCount) {
-      console.log(`Marked ${result.modifiedCount} legacy users as email-verified.`);
-    }
-  } catch (error) {
-    console.warn("Legacy user verification migration skipped:", error.message);
-  }
-};
-
-mongoose.connection.once("open", () => {
-  dropLegacyUserIndexIfPresent();
-  markLegacyUsersVerified();
-});
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -83,76 +47,45 @@ const setFlash = (req, type, message) => {
   req.session.flash = { type, message };
 };
 
-const EMAIL_VERIFICATION_TTL_MS = 1000 * 60 * 60 * 24;
-const googleClientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
-const googleOAuthClient = googleClientId ? new OAuth2Client(googleClientId) : null;
-
-const buildBaseUrl = (req) => {
-  const configured = (process.env.APP_BASE_URL || "").trim();
-  if (configured) return configured.replace(/\/+$/, "");
-  return `${req.protocol}://${req.get("host")}`;
-};
-
-const hashToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
-
-const generateEmailVerificationToken = () => crypto.randomBytes(32).toString("hex");
-
-const getEmailTransporter = () => {
-  const host = (process.env.SMTP_HOST || "").trim();
-  const user = (process.env.SMTP_USER || "").trim();
-  const pass = (process.env.SMTP_PASS || "").trim();
-  const from = (process.env.EMAIL_FROM || user).trim();
-  if (!host || !user || !pass || !from) return null;
-
-  return nodemailer.createTransport({
-    host,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: String(process.env.SMTP_SECURE || "false").toLowerCase() === "true",
-    auth: { user, pass },
-  });
-};
-
-const sendVerificationEmail = async ({ req, user, token }) => {
-  const transporter = getEmailTransporter();
-  if (!transporter) {
-    console.warn("Email verification skipped: SMTP is not configured.");
-    return false;
-  }
-
-  const verifyUrl = `${buildBaseUrl(req)}/verify-email?token=${encodeURIComponent(token)}`;
-  const fromAddress = (process.env.EMAIL_FROM || process.env.SMTP_USER || "").trim();
-  await transporter.sendMail({
-    from: fromAddress,
-    to: user.email,
-    subject: "Verify your StayFinder email",
-    text: `Hi ${user.name},\n\nPlease verify your email by opening this link:\n${verifyUrl}\n\nThis link expires in 24 hours.\n\n- StayFinder`,
-  });
-  return true;
-};
-
-const createAndSendVerificationToken = async (req, user) => {
-  const token = generateEmailVerificationToken();
-  user.emailVerificationTokenHash = hashToken(token);
-  user.emailVerificationExpiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS);
-  await user.save();
-  return sendVerificationEmail({ req, user, token });
-};
-
 const sanitizeSessionUser = (userDoc) => ({
   id: userDoc._id.toString(),
   name: userDoc.name,
   email: userDoc.email,
 });
 
-const verifyGoogleCredential = async (credential) => {
-  if (!googleOAuthClient) {
-    throw new Error("Google login is not configured.");
+const isLoggedIn = (req, res, next) => {
+  if (!req.session.user) {
+    setFlash(req, "error", "Please login to continue.");
+    return res.redirect("/login");
   }
-  const ticket = await googleOAuthClient.verifyIdToken({
-    idToken: credential,
-    audience: googleClientId,
-  });
-  return ticket.getPayload();
+  next();
+};
+
+const isGuestOnly = (req, res, next) => {
+  if (req.session.user) {
+    return res.redirect("/listings");
+  }
+  next();
+};
+
+const isListingOwner = async (req, res, next) => {
+  const { id } = req.params;
+  const listing = await Listing.findById(id).select("owner");
+
+  if (!listing) {
+    return res.status(404).send("Listing not found");
+  }
+
+  if (
+    !req.session.user ||
+    !listing.owner ||
+    listing.owner.toString() !== req.session.user.id
+  ) {
+    setFlash(req, "error", "You are not authorized to manage this listing.");
+    return res.redirect(`/listings/${id}`);
+  }
+
+  next();
 };
 
 const categoryLabelByKey = {
@@ -391,44 +324,11 @@ const buildListingQueryFromIntent = ({ selectedCategory, city, naturalQuery, int
   return query;
 };
 
-const isLoggedIn = (req, res, next) => {
-  if (!req.session.user) {
-    setFlash(req, "error", "Please login to continue.");
-    return res.redirect("/login");
-  }
-  next();
-};
-
-const isGuestOnly = (req, res, next) => {
-  if (req.session.user) {
-    return res.redirect("/listings");
-  }
-  next();
-};
-
-const isListingOwner = async (req, res, next) => {
-  const { id } = req.params;
-  const listing = await Listing.findById(id).select("owner");
-
-  if (!listing) {
-    return res.status(404).send("Listing not found");
-  }
-
-  if (!listing.owner || listing.owner.toString() !== req.session.user.id) {
-    setFlash(req, "error", "You are not authorized to manage this listing.");
-    return res.redirect(`/listings/${id}`);
-  }
-
-  req.listing = listing;
-  next();
-};
-
 app.use((req, res, next) => {
   res.locals.navCategories = NAV_CATEGORIES;
   res.locals.selectedCategory = "all";
   res.locals.currentUser = req.session.user || null;
   res.locals.flash = req.session.flash || null;
-  res.locals.googleClientId = googleClientId;
   delete req.session.flash;
   next();
 });
@@ -468,11 +368,7 @@ app.get("/listings", async (req, res) => {
   res.render("listings/index", { listings });
 });
 
-app.get("/listings/new", (req, res) => {
-  if (!req.session.user) {
-    setFlash(req, "error", "Please login to create a listing.");
-    return res.redirect("/login");
-  }
+app.get("/listings/new", isLoggedIn, (req, res) => {
   res.render("listings/new");
 });
 
@@ -661,8 +557,11 @@ app.get("/listings/:id", async (req, res) => {
   if (!listing) {
     return res.status(404).send("Listing not found");
   }
-  const canManageListing =
-    req.session.user && listing.owner && listing.owner.toString() === req.session.user.id;
+  const canManageListing = Boolean(
+    req.session.user &&
+      listing.owner &&
+      listing.owner.toString() === req.session.user.id
+  );
   res.render("listings/show", { listing, canManageListing });
 });
 
@@ -732,22 +631,12 @@ app.post("/signup", isGuestOnly, async (req, res) => {
 
   try {
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await User.create({
+    await User.create({
       name: name.trim(),
       email: normalizedEmail,
       passwordHash,
-      isEmailVerified: false,
     });
-    const emailSent = await createAndSendVerificationToken(req, user);
-    if (emailSent) {
-      setFlash(req, "success", "Account created. Please verify your email before login.");
-    } else {
-      setFlash(
-        req,
-        "error",
-        "Account created, but verification email could not be sent. Contact support to configure SMTP."
-      );
-    }
+    setFlash(req, "success", "Account created. You can log in now.");
     res.redirect("/login");
   } catch (error) {
     if (error && error.code === 11000) {
@@ -771,25 +660,14 @@ app.post("/login", isGuestOnly, async (req, res) => {
     return res.redirect("/login");
   }
 
-  if (!user.passwordHash) {
-    setFlash(req, "error", "This account uses Google login. Please continue with Google.");
-    return res.redirect("/login");
-  }
-
   const isMatch = await bcrypt.compare(password || "", user.passwordHash);
   if (!isMatch) {
     setFlash(req, "error", "Invalid email or password.");
     return res.redirect("/login");
   }
 
-  if (!user.isEmailVerified) {
-    setFlash(req, "error", "Please verify your email before logging in.");
-    return res.redirect("/login");
-  }
-
   req.session.user = sanitizeSessionUser(user);
 
-  // Keep session for 30 days only when remember me is selected.
   if (rememberMe) {
     req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
   } else {
@@ -800,120 +678,10 @@ app.post("/login", isGuestOnly, async (req, res) => {
   res.redirect("/listings");
 });
 
-app.get("/verify-email", async (req, res) => {
-  const rawToken = (req.query.token || "").toString().trim();
-  if (!rawToken) {
-    setFlash(req, "error", "Verification token is missing.");
-    return res.redirect("/login");
-  }
-
-  const tokenHash = hashToken(rawToken);
-  const user = await User.findOne({
-    emailVerificationTokenHash: tokenHash,
-    emailVerificationExpiresAt: { $gt: new Date() },
-  });
-
-  if (!user) {
-    setFlash(req, "error", "Verification link is invalid or expired.");
-    return res.redirect("/login");
-  }
-
-  user.isEmailVerified = true;
-  user.emailVerificationTokenHash = null;
-  user.emailVerificationExpiresAt = null;
-  await user.save();
-
-  setFlash(req, "success", "Email verified successfully. You can now log in.");
-  res.redirect("/login");
-});
-
-app.post("/resend-verification", isGuestOnly, async (req, res) => {
-  const normalizedEmail = (req.body.email || "").toLowerCase().trim();
-  if (!normalizedEmail) {
-    setFlash(req, "error", "Please provide your email.");
-    return res.redirect("/login");
-  }
-
-  const user = await User.findOne({ email: normalizedEmail });
-  if (!user) {
-    setFlash(req, "error", "No account found for this email.");
-    return res.redirect("/login");
-  }
-
-  if (user.isEmailVerified) {
-    setFlash(req, "success", "This email is already verified. Please login.");
-    return res.redirect("/login");
-  }
-
-  const emailSent = await createAndSendVerificationToken(req, user);
-  if (emailSent) {
-    setFlash(req, "success", "Verification email sent. Please check your inbox.");
-  } else {
-    setFlash(req, "error", "Unable to send verification email right now.");
-  }
-  res.redirect("/login");
-});
-
-app.post("/auth/google", isGuestOnly, async (req, res) => {
-  try {
-    const credential = (req.body.credential || "").toString().trim();
-    if (!credential) {
-      setFlash(req, "error", "Google credential is missing.");
-      return res.redirect("/login");
-    }
-
-    const payload = await verifyGoogleCredential(credential);
-    const email = (payload?.email || "").toLowerCase().trim();
-    const googleId = (payload?.sub || "").toString().trim();
-    const name = (payload?.name || email.split("@")[0] || "Google User").trim();
-
-    if (!email || !googleId) {
-      setFlash(req, "error", "Google login failed. Missing profile details.");
-      return res.redirect("/login");
-    }
-
-    if (payload.email_verified !== true) {
-      setFlash(req, "error", "Your Google email is not verified.");
-      return res.redirect("/login");
-    }
-
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = await User.create({
-        name,
-        email,
-        googleId,
-        isEmailVerified: true,
-      });
-    } else {
-      let changed = false;
-      if (!user.googleId) {
-        user.googleId = googleId;
-        changed = true;
-      }
-      if (!user.isEmailVerified) {
-        user.isEmailVerified = true;
-        user.emailVerificationTokenHash = null;
-        user.emailVerificationExpiresAt = null;
-        changed = true;
-      }
-      if (changed) await user.save();
-    }
-
-    req.session.user = sanitizeSessionUser(user);
-    setFlash(req, "success", "Logged in with Google.");
-    res.redirect("/listings");
-  } catch (error) {
-    console.error("Google auth error:", error);
-    setFlash(req, "error", "Google login failed. Please try again.");
-    res.redirect("/login");
-  }
-});
-
 app.post("/logout", isLoggedIn, (req, res) => {
   req.session.destroy(() => {
     res.clearCookie("connect.sid");
-    res.redirect("/login");
+    res.redirect("/listings");
   });
 });
 

@@ -9,12 +9,12 @@
   <body>
     <%- include("../partials/navbar") %>
     <main class="container form-page">
-      <h1>My Profile</h1>
-      <section class="form-card auth-card profile-card">
+      <h1>Profile</h1>
+      <div class="form-card profile-card">
         <p><strong>Name:</strong> <%= user.name %></p>
         <p><strong>Email:</strong> <%= user.email %></p>
-        <p><strong>Member Since:</strong> <%= new Date(user.createdAt).toDateString() %></p>
-      </section>
+      </div>
+      <p class="form-subtitle"><a href="/listings">← Back to listings</a></p>
     </main>
   </body>
 </html>
